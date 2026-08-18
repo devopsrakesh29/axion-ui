@@ -1,0 +1,47 @@
+environment: int
+
+replicaCount: 1
+
+image:
+  repository: rakeshacr01.azurecr.io/axion-ui
+  pullPolicy: Always
+  tag: "int-latest"
+
+service:
+  type: ClusterIP
+  port: 80
+  targetPort: 80
+
+ingress:
+  enabled: true
+  className: kong
+  hosts:
+    - host: int-dashboard.axion.local
+      paths:
+        - path: /
+          pathType: Prefix
+
+env:
+  VITE_API_URL: ""
+
+livenessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 10
+  periodSeconds: 15
+
+readinessProbe:
+  httpGet:
+    path: /
+    port: 80
+  initialDelaySeconds: 5
+  periodSeconds: 10
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 512Mi

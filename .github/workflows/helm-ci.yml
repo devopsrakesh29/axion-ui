@@ -1,0 +1,89 @@
+name: Helm Chart CI Pipeline - UI Service
+
+on:
+  push:
+    branches: [ main, master, dev, int ]
+  pull_request:
+    branches: [ main, master, dev, int ]
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Target Environment (dev, int, prod)'
+        required: true
+        default: 'dev'
+        type: choice
+        options:
+          - dev
+          - int
+          - prod
+
+env:
+  ACR_NAME: rakeshacr01
+  SERVICE_NAME: axion-ui
+  AZURE_CLIENT_ID: "a74bb5f1-70ab-4e43-804f-911563937a5b"
+  AZURE_TENANT_ID: "cf95a022-f760-4c81-b527-b8d8a9caddc2"
+  AZURE_SUBSCRIPTION_ID: "a60bfb4b-160f-44e7-979b-775bdd787c90"
+
+jobs:
+  package-and-push:
+    name: Lint, Package & Push Helm Chart to ACR OCI
+    runs-on: self-hosted
+    steps:
+      - name: Checkout Repository
+        uses: actions/checkout@v4
+
+      - name: Setup Helm
+        uses: azure/setup-helm@v4
+        with:
+          version: 'v3.14.0'
+
+      - name: Azure Login
+        uses: azure/login@v2
+        with:
+          client-id: ${{ env.AZURE_CLIENT_ID }}
+          tenant-id: ${{ env.AZURE_TENANT_ID }}
+          subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
+
+      - name: ACR & Helm OCI Registry Login
+        shell: bash
+        run: |
+          az acr login --name ${{ env.ACR_NAME }}
+          USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }} --expose-token --query accessToken -o tsv)
+          echo "$USER_TOKEN" | helm registry login ${{ env.ACR_NAME }}.azurecr.io --username a74bb5f1-70ab-4e43-804f-911563937a5b --password-stdin
+
+      - name: Helm Lint
+        run: |
+          helm lint chart/
+
+      - name: Package Helm Chart
+        shell: bash
+        run: |
+          mkdir -p dist
+          SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          helm package chart/ --version "0.1.0-$SHORT_SHA" --destination dist/
+
+      - name: Push Helm Chart to ACR OCI (with automatic IP whitelisting fallback)
+        shell: bash
+        run: |
+          push_chart() {
+            helm push dist/*.tgz oci://${{ env.ACR_NAME }}.azurecr.io/helm
+          }
+
+          if ! push_chart; then
+            echo "::warning::Helm OCI push failed. Attempting to whitelist runner IP address in ACR firewall rules..."
+            RUNNER_IP=$(curl -s https://api.ipify.org || curl -s https://ifconfig.me)
+            echo "Runner Public IP: $RUNNER_IP"
+            
+            if [ -n "$RUNNER_IP" ]; then
+              echo "Adding IP rule for $RUNNER_IP to ACR ${{ env.ACR_NAME }}..."
+              az acr network-rule add --name ${{ env.ACR_NAME }} --ip-address "$RUNNER_IP"
+              echo "Waiting 5 seconds for network rule propagation..."
+              sleep 5
+              
+              echo "Retrying Helm OCI push after whitelisting IP..."
+              push_chart
+            else
+              echo "Failed to determine runner public IP."
+              exit 1
+            fi
+          fi
