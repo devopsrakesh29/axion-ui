@@ -58,6 +58,7 @@ jobs:
         shell: bash
         run: |
           az acr login --name ${{ env.ACR_NAME }}
+          USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }}-expose-token --query accessToken -o tsv || az acr login --name ${{ env.ACR_NAME }}-expose-token)
           USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }} --expose-token --query accessToken -o tsv)
           echo "$USER_TOKEN" | helm registry login ${{ env.ACR_NAME }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
 
@@ -71,7 +72,13 @@ jobs:
           mkdir -p dist
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
           DATE_STAMP=$(date +'%Y%m%d')
-          helm package chart/ --version "0.1.0-${{DATE_STAMP}}-${{SHORT_SHA}}" --destination dist/
+          CHART_VER=$(grep '^version:' chart/Chart.yaml | awk '{print $2}')
+          
+          # Package Date-SHA version tag (e.g. 0.1.0-20260818-4b64e6b)
+          helm package chart/ --version "${{CHART_VER}}-${{DATE_STAMP}}-${{SHORT_SHA}}" --destination dist/
+          
+          # Package clean base semver tag (e.g. 0.1.0) for FluxCD deployment matching
+          helm package chart/ --version "${{CHART_VER}}" --destination dist/
 
       - name: Push Helm Chart to ACR OCI (with automatic IP whitelisting fallback)
         shell: bash
