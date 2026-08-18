@@ -53,7 +53,7 @@ jobs:
         run: |
           az acr login --name ${{ env.ACR_NAME }}
           USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }} --expose-token --query accessToken -o tsv)
-          echo "$USER_TOKEN" | helm registry login ${{ env.ACR_NAME }}.azurecr.io --username a74bb5f1-70ab-4e43-804f-911563937a5b --password-stdin
+          echo "$USER_TOKEN" | helm registry login ${{ env.ACR_NAME }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
 
       - name: Helm Lint
         run: |
