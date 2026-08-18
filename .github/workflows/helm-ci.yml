@@ -27,7 +27,7 @@ env:
 jobs:
   package-and-push:
     name: Lint, Package & Push Helm Chart to ACR OCI
-    runs-on: self-hosted
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout Repository
         uses: actions/checkout@v4
