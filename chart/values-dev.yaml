@@ -5,7 +5,7 @@ replicaCount: 1
 image:
   repository: rakeshacr01.azurecr.io/dev-axion-ui
   pullPolicy: Always
-  tag: "dev-latest"
+  tag: "latest"
 
 service:
   type: ClusterIP
