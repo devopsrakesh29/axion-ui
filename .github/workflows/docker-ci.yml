@@ -3,8 +3,16 @@ name: Docker Image CI Pipeline - UI Service
 on:
   push:
     branches: [ main, master, dev, int ]
+    paths-ignore:
+      - 'chart/**'
+      - '.github/workflows/helm-ci.yml'
+      - '**.md'
   pull_request:
     branches: [ main, master, dev, int ]
+    paths-ignore:
+      - 'chart/**'
+      - '.github/workflows/helm-ci.yml'
+      - '**.md'
   workflow_dispatch:
     inputs:
       environment:
