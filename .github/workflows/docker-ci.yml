@@ -24,6 +24,10 @@ env:
   AZURE_TENANT_ID: "cf95a022-f760-4c81-b527-b8d8a9caddc2"
   AZURE_SUBSCRIPTION_ID: "a60bfb4b-160f-44e7-979b-775bdd787c90"
 
+permissions:
+  id-token: write
+  contents: read
+
 jobs:
   build-scan-push:
     name: Build, Scan & Push Docker Image
