@@ -3,7 +3,7 @@ environment: prod
 replicaCount: 1
 
 image:
-  repository: rakeshacr01.azurecr.io/axion-ui
+  repository: rakeshacr01.azurecr.io/prod-axion-ui
   pullPolicy: Always
   tag: "prod-latest"
 

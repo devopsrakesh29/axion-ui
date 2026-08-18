@@ -1,10 +1,16 @@
-name: Helm Chart CI Pipeline - UI Service
+name: Helm Chart CI Pipeline - axion-ui
 
 on:
   push:
     branches: [ main, master, dev, int ]
+    paths:
+      - 'chart/**'
+      - '.github/workflows/helm-ci.yml'
   pull_request:
     branches: [ main, master, dev, int ]
+    paths:
+      - 'chart/**'
+      - '.github/workflows/helm-ci.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -64,7 +70,8 @@ jobs:
         run: |
           mkdir -p dist
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
-          helm package chart/ --version "0.1.0-$SHORT_SHA" --destination dist/
+          DATE_STAMP=$(date +'%Y%m%d')
+          helm package chart/ --version "0.1.0-${{DATE_STAMP}}-${{SHORT_SHA}}" --destination dist/
 
       - name: Push Helm Chart to ACR OCI (with automatic IP whitelisting fallback)
         shell: bash
@@ -74,7 +81,7 @@ jobs:
           }
 
           if ! push_chart; then
-            echo "::warning::Helm OCI push failed. Attempting to whitelist runner IP address in ACR firewall rules..."
+            echo "::warning::Helm push failed. Attempting to whitelist runner IP address in ACR firewall rules..."
             RUNNER_IP=$(curl -s https://api.ipify.org || curl -s https://ifconfig.me)
             echo "Runner Public IP: $RUNNER_IP"
             
@@ -84,7 +91,7 @@ jobs:
               echo "Waiting 5 seconds for network rule propagation..."
               sleep 5
               
-              echo "Retrying Helm OCI push after whitelisting IP..."
+              echo "Retrying Helm push after whitelisting IP..."
               push_chart
             else
               echo "Failed to determine runner public IP."

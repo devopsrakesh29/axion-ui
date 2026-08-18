@@ -1,10 +1,32 @@
-name: Docker Image CI Pipeline - UI Service
+name: Docker Image CI Pipeline - axion-ui
 
 on:
   push:
     branches: [ main, master, dev, int ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'Dockerfile'
+      - '**.py'
+      - '**.tsx'
+      - '**.ts'
+      - '**.js'
+      - '**.json'
+      - 'requirements.txt'
+      - '.github/workflows/docker-ci.yml'
   pull_request:
     branches: [ main, master, dev, int ]
+    paths:
+      - 'src/**'
+      - 'public/**'
+      - 'Dockerfile'
+      - '**.py'
+      - '**.tsx'
+      - '**.ts'
+      - '**.js'
+      - '**.json'
+      - 'requirements.txt'
+      - '.github/workflows/docker-ci.yml'
   workflow_dispatch:
     inputs:
       environment:
@@ -19,7 +41,7 @@ on:
 
 env:
   ACR_NAME: rakeshacr01
-  SERVICE_NAME: axion-ui
+  SERVICE_NAME_BASE: axion-ui
   AZURE_CLIENT_ID: "a74bb5f1-70ab-4e43-804f-911563937a5b"
   AZURE_TENANT_ID: "cf95a022-f760-4c81-b527-b8d8a9caddc2"
   AZURE_SUBSCRIPTION_ID: "a60bfb4b-160f-44e7-979b-775bdd787c90"
@@ -36,7 +58,7 @@ jobs:
       - name: Checkout Repository
         uses: actions/checkout@v4
 
-      - name: Resolve Environment & Image Tags
+      - name: Resolve Environment, ACR Repository & Image Tag
         id: prep
         shell: bash
         run: |
@@ -51,8 +73,13 @@ jobs:
           fi
           
           SHORT_SHA=$(echo "${{ github.sha }}" | cut -c1-7)
+          DATE_STAMP=$(date +'%Y%m%d')
+          FULL_TAG="${DATE_STAMP}-${SHORT_SHA}"
+          ACR_REPO="${ENV}-${SERVICE_NAME_BASE}"
+          
           echo "TARGET_ENV=$ENV" >> $GITHUB_ENV
-          echo "FINAL_TAG=${ENV}-${SHORT_SHA}" >> $GITHUB_ENV
+          echo "ACR_REPO=$ACR_REPO" >> $GITHUB_ENV
+          echo "FINAL_TAG=$FULL_TAG" >> $GITHUB_ENV
 
       - name: Azure Login
         uses: azure/login@v2
@@ -68,14 +95,14 @@ jobs:
       - name: Build Docker Image
         run: |
           docker build \
-            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.SERVICE_NAME }}:${{ env.FINAL_TAG }} \
-            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.SERVICE_NAME }}:latest \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_REPO }}:${{ env.FINAL_TAG }} \
+            -t ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_REPO }}:latest \
             .
 
       - name: Run Trivy Vulnerability Scan
         uses: aquasecurity/trivy-action@master
         with:
-          image-ref: '${{ env.ACR_NAME }}.azurecr.io/${{ env.SERVICE_NAME }}:${{ env.FINAL_TAG }}'
+          image-ref: '${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_REPO }}:${{ env.FINAL_TAG }}'
           format: 'table'
           exit-code: '0'
           ignore-unfixed: true
@@ -86,8 +113,8 @@ jobs:
         shell: bash
         run: |
           push_images() {
-            docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.SERVICE_NAME }}:${{ env.FINAL_TAG }} && \
-            docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.SERVICE_NAME }}:latest
+            docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_REPO }}:${{ env.FINAL_TAG }} && \
+            docker push ${{ env.ACR_NAME }}.azurecr.io/${{ env.ACR_REPO }}:latest
           }
 
           if ! push_images; then

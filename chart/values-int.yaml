@@ -3,7 +3,7 @@ environment: int
 replicaCount: 1
 
 image:
-  repository: rakeshacr01.azurecr.io/axion-ui
+  repository: rakeshacr01.azurecr.io/int-axion-ui
   pullPolicy: Always
   tag: "int-latest"
 
