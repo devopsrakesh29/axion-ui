@@ -3,14 +3,8 @@ name: Helm Chart CI Pipeline - UI Service
 on:
   push:
     branches: [ main, master, dev, int ]
-    paths:
-      - 'chart/**'
-      - '.github/workflows/helm-ci.yml'
   pull_request:
     branches: [ main, master, dev, int ]
-    paths:
-      - 'chart/**'
-      - '.github/workflows/helm-ci.yml'
   workflow_dispatch:
     inputs:
       environment:
