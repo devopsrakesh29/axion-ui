@@ -54,13 +54,13 @@ jobs:
           tenant-id: ${{ env.AZURE_TENANT_ID }}
           subscription-id: ${{ env.AZURE_SUBSCRIPTION_ID }}
 
-      - name: ACR & Helm OCI Registry Login
+            - name: ACR & Helm OCI Registry Login
         shell: bash
         run: |
           az acr login --name ${{ env.ACR_NAME }}
-          USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }}-expose-token --query accessToken -o tsv || az acr login --name ${{ env.ACR_NAME }}-expose-token)
           USER_TOKEN=$(az acr login --name ${{ env.ACR_NAME }} --expose-token --query accessToken -o tsv)
           echo "$USER_TOKEN" | helm registry login ${{ env.ACR_NAME }}.azurecr.io --username 00000000-0000-0000-0000-000000000000 --password-stdin
+
 
       - name: Helm Lint
         run: |
