@@ -84,7 +84,9 @@ jobs:
         shell: bash
         run: |
           push_chart() {
-            helm push dist/*.tgz oci://${{ env.ACR_NAME }}.azurecr.io/helm
+            for pkg in dist/*.tgz; do
+              helm push "$pkg" oci://${{ env.ACR_NAME }}.azurecr.io/helm
+            done
           }
 
           if ! push_chart; then
