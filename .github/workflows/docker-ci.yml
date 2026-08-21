@@ -2,7 +2,7 @@ name: Docker Image CI Pipeline - axion-ui
 
 on:
   push:
-    branches: [ main, master, dev, int ]
+    branches: [ main, master ]
     paths:
       - 'src/**'
       - 'public/**'
@@ -15,7 +15,7 @@ on:
       - 'requirements.txt'
       - '.github/workflows/docker-ci.yml'
   pull_request:
-    branches: [ main, master, dev, int ]
+    branches: [ main, master ]
     paths:
       - 'src/**'
       - 'public/**'

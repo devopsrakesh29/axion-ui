@@ -2,12 +2,12 @@ name: Helm Chart CI Pipeline - axion-ui
 
 on:
   push:
-    branches: [ main, master, dev, int ]
+    branches: [ main, master ]
     paths:
       - 'chart/**'
       - '.github/workflows/helm-ci.yml'
   pull_request:
-    branches: [ main, master, dev, int ]
+    branches: [ main, master ]
     paths:
       - 'chart/**'
       - '.github/workflows/helm-ci.yml'
